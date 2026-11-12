@@ -1,0 +1,26 @@
+# MT alteradora: complementa a ↔ b en toda la cinta, sin borrar la entrada.
+q_states:
+  q_list: ["start", "scan", "done"]
+  initial: "start"
+  final: "done"
+
+alphabet: [a, b]
+tape_alphabet: [a, b, null]
+
+delta:
+  - params: {initial_state: "start", mem_cache_value: null, tape_input: a}
+    output: {final_state: "scan", mem_cache_value: null, tape_output: b, tape_displacement: R}
+  - params: {initial_state: "start", mem_cache_value: null, tape_input: b}
+    output: {final_state: "scan", mem_cache_value: null, tape_output: a, tape_displacement: R}
+  - params: {initial_state: "scan", mem_cache_value: null, tape_input: a}
+    output: {final_state: "scan", mem_cache_value: null, tape_output: b, tape_displacement: R}
+  - params: {initial_state: "scan", mem_cache_value: null, tape_input: b}
+    output: {final_state: "scan", mem_cache_value: null, tape_output: a, tape_displacement: R}
+  - params: {initial_state: "scan", mem_cache_value: null, tape_input: null}
+    output: {final_state: "done", mem_cache_value: null, tape_output: null, tape_displacement: S}
+
+simulation_strings:
+  - aaaaa
+  - bbbbb
+  - ababa
+  - aabbab
