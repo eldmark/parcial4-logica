@@ -130,4 +130,3 @@ simulation_strings:
         "empty_transitions",
         "invalid_simulation_string_symbol",
     } <= codes
-
