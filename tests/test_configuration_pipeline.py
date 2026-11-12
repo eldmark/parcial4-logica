@@ -15,6 +15,8 @@ from tm_simulator.domain import (
     YamlSyntaxError,
 )
 
+FIXTURES_DIR = Path(__file__).parent / "fixtures" / "yaml"
+
 SAMPLE_PIPELINE_YAML = """\
 q_states:
   q_list:
@@ -84,15 +86,32 @@ def test_load_machine_from_text_end_to_end() -> None:
     )
 
 
-def test_load_machine_from_file_end_to_end(tmp_path: Path) -> None:
-    yaml_file = tmp_path / "tm_config.yaml"
-    yaml_file.write_text(SAMPLE_PIPELINE_YAML, encoding="utf-8")
+def test_load_machine_from_file_minimal_fixture() -> None:
+    machine = load_machine_from_file(FIXTURES_DIR / "valid_minimal.yaml")
 
-    machine = load_machine_from_file(yaml_file)
-
+    assert machine.states == frozenset({"0", "1", "2"})
     assert machine.initial_state == "0"
     assert machine.final_state == "2"
     assert len(machine.transitions) == 2
+    assert machine.simulation_strings == ("ab", "aab")
+
+
+def test_load_machine_from_file_recognizer_w_hash_w_fixture() -> None:
+    machine = load_machine_from_file(FIXTURES_DIR / "recognizer_w_hash_w.yaml")
+
+    assert machine.states == frozenset({"0", "1", "2", "3", "4", "5"})
+    assert machine.initial_state == "0"
+    assert machine.final_state == "5"
+    assert machine.input_alphabet == frozenset({"a", "b", "#"})
+    assert machine.tape_alphabet == frozenset({"a", "b", "#", "X", None})
+    assert len(machine.transitions) == 21
+    assert machine.simulation_strings == (
+        "aab#aab",
+        "abbba#abbba",
+        "aab#aba",
+        "abbababa#aba",
+    )
+    assert all(len(s) >= 5 for s in machine.simulation_strings)
 
 
 def test_load_machine_from_file_propagates_load_error(tmp_path: Path) -> None:
@@ -100,33 +119,25 @@ def test_load_machine_from_file_propagates_load_error(tmp_path: Path) -> None:
         load_machine_from_file(tmp_path / "missing.yaml")
 
 
-def test_load_machine_from_text_propagates_syntax_error() -> None:
+def test_load_machine_from_file_syntax_error_fixture() -> None:
     with pytest.raises(YamlSyntaxError):
-        load_machine_from_text("q_states:\n  q_list: [0, 1\n")
+        load_machine_from_file(FIXTURES_DIR / "invalid_syntax.yaml")
 
 
-def test_load_machine_from_text_propagates_validation_error() -> None:
-    invalid_yaml = """\
-q_states:
-  q_list:
-    - "0"
-  initial: "0"
-  final: "9"
-alphabet:
-  - a
-tape_alphabet:
-  - a
-delta: []
-simulation_strings:
-  - b
-"""
+def test_load_machine_from_file_empty_fixture() -> None:
     with pytest.raises(MachineValidationError) as exc_info:
-        load_machine_from_text(invalid_yaml)
+        load_machine_from_file(FIXTURES_DIR / "invalid_empty.yaml")
 
-    codes = {issue.code for issue in exc_info.value.issues}
-    assert {
-        "unknown_state",
-        "missing_blank_in_tape_alphabet",
-        "empty_transitions",
-        "invalid_simulation_string_symbol",
-    } <= codes
+    assert exc_info.value.issues[0].code == "empty_document"
+
+
+def test_load_machine_from_file_semantic_errors_fixture() -> None:
+    with pytest.raises(MachineValidationError) as exc_info:
+        load_machine_from_file(FIXTURES_DIR / "invalid_semantic.yaml")
+
+    by_path = {issue.path: issue.code for issue in exc_info.value.issues}
+    assert by_path["q_states.final"] == "unknown_state"
+    assert by_path["tape_alphabet"] == "input_symbol_not_in_tape_alphabet"
+    assert by_path["delta[0].output.final_state"] == "unknown_state"
+    assert by_path["delta[0].output.tape_displacement"] == "invalid_movement"
+    assert by_path["simulation_strings[0]"] == "invalid_simulation_string_symbol"
