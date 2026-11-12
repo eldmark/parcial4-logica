@@ -11,9 +11,12 @@ Simulador de Máquinas deterministas de Turing de una cinta con registro de memo
   - Modelos de dominio inmutables (`Movement`, `TransitionKey`, `TransitionEffect`, `MachineDefinition`) y jerarquía de errores ubicados (`ConfigurationError`, `YamlLoadError`, `YamlSyntaxError`, `MachineValidationError`, `ValidationIssue`).
   - Pipeline de carga segura de YAML (`yaml.safe_load` en UTF-8), normalización controlada del símbolo blanco y validación estructural/semántica exhaustiva.
   - CLI de diagnóstico para validar archivos YAML desde terminal.
-  - Suite de pruebas automatizadas con `pytest` y cobertura del 100 % en dominio y configuración.
+  - Motor de simulación con cinta infinita, ejecución completa o paso a paso y trazas de descripciones instantáneas.
+  - API HTTP con esquema OpenAPI para simular una cadena o todas las cadenas configuradas.
+  - YAML de reconocedora y alteradora con sus casos de prueba.
+  - Suite de pruebas automatizadas con `pytest` y cobertura de dominio, configuración, motor y API.
 - **Pendiente**:
-  - Cinta (`Tape`), motor de simulación, ejecución de transiciones, descripciones instantáneas (snapshots) y frontend.
+  - Frontend.
 
 ## Requisitos
 
@@ -49,7 +52,21 @@ uv run python -m tm_simulator tests/fixtures/yaml/invalid_semantic.yaml
 uv run pytest
 ```
 
-### 4. Análisis estático y formato con Ruff
+### 4. Servir la API para el frontend
+
+```bash
+uv run uvicorn tm_simulator.api:app --reload
+```
+
+El contrato OpenAPI está en `http://127.0.0.1:8000/openapi.json` y la documentación interactiva en `/docs`.
+
+`POST /api/v1/simulations` recibe `{ "yaml": "...", "input": "aab#aab", "max_steps": 10000 }`. Si se omite `input`, ejecuta todas las `simulation_strings` del YAML. La cadena vacía se envía como `"input": ""`. Devuelve `results`, cada uno con `status` (`accepted`, `rejected`, `indeterminate`), `halt_reason` (`accepted`, `no_transition`, `step_limit`), `steps`, `final_tape`, `snapshots` y `transitions`.
+
+`POST /api/v1/simulations/step` recibe los mismos campos más `step` (índice desde cero) y exige `input`. Devuelve `snapshot`, `transition` (la transición que llevó a esa ID, o `null` en el paso cero) y `halt_reason` si ya se detuvo. Un paso posterior a la detención responde 404. YAML o entrada inválida responden 422. Cada cinta se representa con `start`, `cells` (el blanco es `null`) y `head`; el índice real de `cells[i]` es `start + i`.
+
+El límite `max_steps` evita ejecuciones sin fin. Al alcanzarlo, el resultado es `indeterminate`, ya que no prueba aceptación ni rechazo. Para un ejemplo, use `tests/fixtures/yaml/recognizer_w_hash_w.yaml` o `tests/fixtures/yaml/alterer_complement_ab.yaml`.
+
+### 5. Análisis estático y formato con Ruff
 
 ```bash
 uv run ruff check .
@@ -219,6 +236,5 @@ print(machine.simulation_strings)  # ('ab', 'aab')
 
 ## Limitaciones actuales
 
-- No existe todavía motor de simulación ni representación de la cinta (`Tape`).
-- El CLI únicamente valida la configuración YAML e imprime su diagnóstico; todavía no ejecuta ni simula las cadenas de `simulation_strings`.
+- El CLI continúa como diagnóstico de configuración; la ejecución se ofrece por la API y por `tm_simulator.simulation`.
 - No existe interfaz gráfica (frontend).
