@@ -1,1 +1,224 @@
-# turing_machine-tdlc
+# Simulador de Máquinas de Turing (`tm-simulator`)
+
+Simulador de Máquinas deterministas de Turing de una cinta con registro de memoria caché.
+
+> **Documentación para desarrolladores**: Si acabas de integrarte al proyecto, revisa la [Guía de Arquitectura, Dominio y Configuración YAML](docs/arquitectura_y_configuracion.md) en `docs/` para conocer en detalle cómo funciona cada módulo y cómo conectar las siguientes capas del simulador.
+
+## Estado actual del proyecto
+
+- **Implementado**:
+  - Estructura base del paquete `tm_simulator` bajo `src/`.
+  - Modelos de dominio inmutables (`Movement`, `TransitionKey`, `TransitionEffect`, `MachineDefinition`) y jerarquía de errores ubicados (`ConfigurationError`, `YamlLoadError`, `YamlSyntaxError`, `MachineValidationError`, `ValidationIssue`).
+  - Pipeline de carga segura de YAML (`yaml.safe_load` en UTF-8), normalización controlada del símbolo blanco y validación estructural/semántica exhaustiva.
+  - CLI de diagnóstico para validar archivos YAML desde terminal.
+  - Suite de pruebas automatizadas con `pytest` y cobertura del 100 % en dominio y configuración.
+- **Pendiente**:
+  - Cinta (`Tape`), motor de simulación, ejecución de transiciones, descripciones instantáneas (snapshots) y frontend.
+
+## Requisitos
+
+- **Python**: `>=3.14,<3.15`
+- **Gestor de proyecto y dependencias**: [`uv`](https://docs.astral.sh/uv/)
+
+## Instalación y uso con `uv`
+
+### 1. Instalar dependencias
+
+```bash
+uv sync --dev
+```
+
+### 2. Ejecutar el CLI validador de YAML
+
+Puedes validar cualquier archivo de configuración YAML y ver el resumen de la Máquina de Turing:
+
+```bash
+# Validar la máquina mínima de prueba
+uv run python -m tm_simulator tests/fixtures/yaml/valid_minimal.yaml
+
+# Validar la máquina reconocedora L = { w#w | w in {a,b}+ }
+uv run python -m tm_simulator tests/fixtures/yaml/recognizer_w_hash_w.yaml
+
+# Probar el reporte de errores con un archivo inválido
+uv run python -m tm_simulator tests/fixtures/yaml/invalid_semantic.yaml
+```
+
+### 3. Ejecutar pruebas y verificar cobertura
+
+```bash
+uv run pytest
+```
+
+### 4. Análisis estático y formato con Ruff
+
+```bash
+uv run ruff check .
+uv run ruff format --check .
+```
+
+## Instalación y ejecución sin `uv` (entorno virtual estándar)
+
+Si prefieres usar `venv` y `pip` directamente con Python 3.14:
+
+```bash
+# 1. Crear el entorno virtual
+python -m venv .venv
+
+# 2. Activar el entorno virtual
+# En Windows (PowerShell):
+.venv\Scripts\Activate.ps1
+# En Linux / macOS:
+source .venv/bin/activate
+
+# 3. Instalar el paquete en modo editable junto con dependencias de desarrollo
+python -m pip install -e ".[dev]"
+
+# 4. Ejecutar el validador CLI
+python -m tm_simulator tests/fixtures/yaml/valid_minimal.yaml
+
+# 5. Ejecutar pruebas
+pytest
+```
+
+## Explicación del pipeline de configuración
+
+El módulo `tm_simulator.configuration` procesa las definiciones en cuatro etapas internas:
+
+```text
+Archivo o texto YAML
+        ↓
+step_01_load_yaml      → Carga segura con yaml.safe_load y codificación UTF-8
+        ↓
+step_02_normalize      → Normalización controlada del símbolo blanco a None
+        ↓
+step_03_validate       → Validación estructural y semántica con recolección de errores
+        ↓
+step_04_build_machine  → Construcción de MachineDefinition inmutable
+```
+
+## Árbol del proyecto
+
+```text
+.
+├── .python-version
+├── pyproject.toml
+├── uv.lock
+├── README.md
+├── docs/
+│   ├── Proyecto No 3.pdf
+│   └── arquitectura_y_configuracion.md
+├── src/
+│   └── tm_simulator/
+│       ├── __init__.py
+│       ├── __main__.py
+│       ├── domain/
+│       │   ├── __init__.py
+│       │   ├── models.py
+│       │   └── errors.py
+│       └── configuration/
+│           ├── __init__.py
+│           ├── pipeline.py
+│           ├── step_01_load_yaml.py
+│           ├── step_02_normalize.py
+│           ├── step_03_validate.py
+│           └── step_04_build_machine.py
+└── tests/
+    ├── fixtures/
+    │   └── yaml/
+    │       ├── invalid_empty.yaml
+    │       ├── invalid_semantic.yaml
+    │       ├── invalid_syntax.yaml
+    │       ├── recognizer_w_hash_w.yaml
+    │       └── valid_minimal.yaml
+    ├── test_cli.py
+    ├── test_configuration_pipeline.py
+    ├── test_machine_builder.py
+    ├── test_normalizer.py
+    ├── test_validator.py
+    └── test_yaml_loader.py
+```
+
+## Formato YAML admitido y símbolo blanco
+
+### Representación del símbolo blanco (`blank`)
+Internamente el símbolo blanco se representa con `None`. Durante la normalización se reconocen como blanco únicamente en campos de símbolo de cinta o memoria (`tape_alphabet`, `mem_cache_value`, `tape_input`, `tape_output`):
+- Un valor YAML vacío (ej. `-` en `tape_alphabet` o `mem_cache_value:` sin valor).
+- `null`.
+- `~`.
+- El texto `None` (sin distinguir mayúsculas y minúsculas).
+
+`tape_alphabet` debe incluir **exactamente una** representación del blanco, y `alphabet` (alfabeto de entrada) no puede contener el blanco.
+
+### Nota sobre el carácter `#`
+En YAML, un carácter `#` sin comillas inicia un comentario y es descartado por el parser. Para utilizar `#` como símbolo de entrada o de cinta, debe escribirse siempre entre comillas: `"#"`.
+
+### Ejemplo mínimo válido
+
+```yaml
+q_states:
+  q_list:
+    - "0"
+    - "1"
+    - "2"
+  initial: "0"
+  final: "2"
+
+alphabet:
+  - a
+  - b
+
+tape_alphabet:
+  - a
+  - b
+  - X
+  -
+
+delta:
+  - params:
+      initial_state: "0"
+      mem_cache_value:
+      tape_input: a
+    output:
+      final_state: "1"
+      mem_cache_value: a
+      tape_output: X
+      tape_displacement: R
+  - params:
+      initial_state: "1"
+      mem_cache_value: a
+      tape_input: b
+    output:
+      final_state: "2"
+      mem_cache_value:
+      tape_output: X
+      tape_displacement: S
+
+simulation_strings:
+  - ab
+  - aab
+```
+
+## API pública
+
+El paquete `tm_simulator.configuration` expone dos funciones públicas que devuelven una `MachineDefinition` inmutable:
+
+- `load_machine_from_file(path: str | Path) -> MachineDefinition`
+- `load_machine_from_text(content: str) -> MachineDefinition`
+
+### Ejemplo de uso en Python
+
+```python
+from tm_simulator.configuration import load_machine_from_file
+
+machine = load_machine_from_file("tests/fixtures/yaml/valid_minimal.yaml")
+print(machine.states)  # frozenset({'0', '1', '2'})
+print(machine.initial_state)  # '0'
+print(machine.final_state)  # '2'
+print(machine.simulation_strings)  # ('ab', 'aab')
+```
+
+## Limitaciones actuales
+
+- No existe todavía motor de simulación ni representación de la cinta (`Tape`).
+- El CLI únicamente valida la configuración YAML e imprime su diagnóstico; todavía no ejecuta ni simula las cadenas de `simulation_strings`.
+- No existe interfaz gráfica (frontend).
