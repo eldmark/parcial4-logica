@@ -2,6 +2,7 @@ import { useState } from "react";
 import { runSimulations, SimulationApiError } from "./api/client";
 import type { ApiError, SimulationResult } from "./api/types";
 import { ErrorPanel } from "./components/ErrorPanel";
+import { ResultTabs } from "./components/ResultTabs";
 import { YamlEditor } from "./components/YamlEditor";
 import { EXAMPLES } from "./examples";
 
@@ -48,18 +49,7 @@ export default function App() {
         onRun={run}
       />
       {error && <ErrorPanel error={error} />}
-      {results.length > 0 && (
-        <section className="panel">
-          <h2>Resultados</h2>
-          <ul>
-            {results.map((r, i) => (
-              <li key={i}>
-                <code>{r.input || "ε"}</code>: {r.status} ({r.steps} pasos)
-              </li>
-            ))}
-          </ul>
-        </section>
-      )}
+      {results.length > 0 && <ResultTabs results={results} />}
     </main>
   );
 }
