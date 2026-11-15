@@ -2,21 +2,23 @@
 
 Simulador de Máquinas deterministas de Turing de una cinta con registro de memoria caché.
 
-> **Documentación para desarrolladores**: Si acabas de integrarte al proyecto, revisa la [Guía de Arquitectura, Dominio y Configuración YAML](docs/arquitectura_y_configuracion.md) en `docs/` para conocer en detalle cómo funciona cada módulo y cómo conectar las siguientes capas del simulador.
+## Integrantes
 
-## Estado actual del proyecto
+- Marco Alejandro Díaz Castañeda
+- Sergio Estuardo Tan Coromac
+- Jackelyn Nicolle Girón Villacinda
 
-- **Implementado**:
-  - Estructura base del paquete `tm_simulator` bajo `src/`.
-  - Modelos de dominio inmutables (`Movement`, `TransitionKey`, `TransitionEffect`, `MachineDefinition`) y jerarquía de errores ubicados (`ConfigurationError`, `YamlLoadError`, `YamlSyntaxError`, `MachineValidationError`, `ValidationIssue`).
-  - Pipeline de carga segura de YAML (`yaml.safe_load` en UTF-8), normalización controlada del símbolo blanco y validación estructural/semántica exhaustiva.
-  - CLI de diagnóstico para validar archivos YAML desde terminal.
-  - Motor de simulación con cinta infinita, ejecución completa o paso a paso y trazas de descripciones instantáneas.
-  - API HTTP con esquema OpenAPI para simular una cadena o todas las cadenas configuradas.
-  - YAML de reconocedora y alteradora con sus casos de prueba.
-  - Suite de pruebas automatizadas con `pytest` y cobertura de dominio, configuración, motor y API.
-- **Pendiente**:
-  - Frontend.
+
+## Funcionalidades implementadas
+
+- **Parsing de la configuración**: lee el YAML de la MT (estados, estado inicial y final, alfabetos, funciones de transición y cadenas a simular), lo valida y construye una definición inmutable de la máquina.
+- **Parsing de la entrada**: cada cadena se valida contra el alfabeto de entrada antes de colocarse en la cinta.
+- **Simulación de MT de una cinta**: cinta infinita en ambos sentidos y registro de memoria, ejecutada con las funciones de transición del YAML.
+- **Descripciones instantáneas (IDs)**: listado completo de IDs por cada cadena, visible en el frontend paso a paso.
+- **Aceptación y rechazo**: la cadena es aceptada al llegar al estado final y rechazada si no existe una transición aplicable. Si se alcanza el límite de pasos, el resultado es indeterminado.
+- **Máquinas de ejemplo**: una reconocedora (`w#w`) y una alteradora (complemento `a↔b`) con sus cadenas de prueba.
+- **Interfaces**: CLI de validación, API HTTP y frontend web.
+- **Pruebas automatizadas** con `pytest`.
 
 ## Requisitos
 
@@ -66,7 +68,19 @@ El contrato OpenAPI está en `http://127.0.0.1:8000/openapi.json` y la documenta
 
 El límite `max_steps` evita ejecuciones sin fin. Al alcanzarlo, el resultado es `indeterminate`, ya que no prueba aceptación ni rechazo. Para un ejemplo, use `tests/fixtures/yaml/recognizer_w_hash_w.yaml` o `tests/fixtures/yaml/alterer_complement_ab.yaml`.
 
-### 5. Análisis estático y formato con Ruff
+### 5. Ejecutar el frontend
+
+Requiere [Node.js](https://nodejs.org/) y el backend corriendo (paso 4). En otra terminal:
+
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+Abre la URL que muestre Vite (normalmente `http://localhost:5173`). Elige un ejemplo, escribe tu propio YAML en **Personalizado** o sube un archivo, y pulsa **Simular**. Si dejas la cadena vacía se simulan todas las `simulation_strings` del YAML.
+
+### 6. Análisis estático y formato con Ruff
 
 ```bash
 uv run ruff check .
@@ -132,6 +146,8 @@ step_04_build_machine  → Construcción de MachineDefinition inmutable
 │       │   ├── __init__.py
 │       │   ├── models.py
 │       │   └── errors.py
+│       ├── simulation.py
+│       ├── api.py
 │       └── configuration/
 │           ├── __init__.py
 │           ├── pipeline.py
@@ -139,12 +155,24 @@ step_04_build_machine  → Construcción de MachineDefinition inmutable
 │           ├── step_02_normalize.py
 │           ├── step_03_validate.py
 │           └── step_04_build_machine.py
+├── frontend/
+│   ├── package.json
+│   ├── vite.config.ts
+│   └── src/
+│       ├── App.tsx
+│       ├── api/                  # tipos y cliente HTTP
+│       ├── components/           # editor, cinta, controles, tabla de IDs, resultados
+│       ├── examples.ts
+│       ├── format.ts
+│       └── usePlayer.ts          # reproducción paso a paso
 └── tests/
     ├── fixtures/
     │   └── yaml/
     │       ├── invalid_empty.yaml
     │       ├── invalid_semantic.yaml
     │       ├── invalid_syntax.yaml
+    │       ├── MTpersonalizado.yaml
+    │       ├── alterer_complement_ab.yaml
     │       ├── recognizer_w_hash_w.yaml
     │       └── valid_minimal.yaml
     ├── test_cli.py
@@ -234,7 +262,3 @@ print(machine.final_state)  # '2'
 print(machine.simulation_strings)  # ('ab', 'aab')
 ```
 
-## Limitaciones actuales
-
-- El CLI continúa como diagnóstico de configuración; la ejecución se ofrece por la API y por `tm_simulator.simulation`.
-- No existe interfaz gráfica (frontend).
