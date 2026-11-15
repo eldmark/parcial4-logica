@@ -1,0 +1,96 @@
+# MT alteradora: invierte la cadena sobre {a, b} (w -> w^R) sobre la misma cinta.
+
+q_states:
+  q_list: ["q0", "q1", "q2", "q3", "c1", "c2", "qf"]
+  initial: "q0"
+  final: "qf"
+
+alphabet: [a, b]
+tape_alphabet: [a, b, A, B, X, null]
+
+delta:
+  # q0: toma el símbolo de la izquierda; si ya no queda nada por procesar, pasa a la limpieza
+  - params: {initial_state: "q0", mem_cache_value: null, tape_input: a}
+    output: {final_state: "q1", mem_cache_value: a, tape_output: X, tape_displacement: R}
+  - params: {initial_state: "q0", mem_cache_value: null, tape_input: b}
+    output: {final_state: "q1", mem_cache_value: b, tape_output: X, tape_displacement: R}
+  - params: {initial_state: "q0", mem_cache_value: null, tape_input: A}
+    output: {final_state: "c1", mem_cache_value: null, tape_output: A, tape_displacement: L}
+  - params: {initial_state: "q0", mem_cache_value: null, tape_input: B}
+    output: {final_state: "c1", mem_cache_value: null, tape_output: B, tape_displacement: L}
+  - params: {initial_state: "q0", mem_cache_value: null, tape_input: null}
+    output: {final_state: "c1", mem_cache_value: null, tape_output: null, tape_displacement: L}
+
+  # q1 con a en memoria: avanza hasta pasar el último símbolo sin procesar y retrocede una celda
+  - params: {initial_state: "q1", mem_cache_value: a, tape_input: a}
+    output: {final_state: "q1", mem_cache_value: a, tape_output: a, tape_displacement: R}
+  - params: {initial_state: "q1", mem_cache_value: a, tape_input: b}
+    output: {final_state: "q1", mem_cache_value: a, tape_output: b, tape_displacement: R}
+  - params: {initial_state: "q1", mem_cache_value: a, tape_input: A}
+    output: {final_state: "q2", mem_cache_value: a, tape_output: A, tape_displacement: L}
+  - params: {initial_state: "q1", mem_cache_value: a, tape_input: B}
+    output: {final_state: "q2", mem_cache_value: a, tape_output: B, tape_displacement: L}
+  - params: {initial_state: "q1", mem_cache_value: a, tape_input: null}
+    output: {final_state: "q2", mem_cache_value: a, tape_output: null, tape_displacement: L}
+  # q1 con b en memoria
+  - params: {initial_state: "q1", mem_cache_value: b, tape_input: a}
+    output: {final_state: "q1", mem_cache_value: b, tape_output: a, tape_displacement: R}
+  - params: {initial_state: "q1", mem_cache_value: b, tape_input: b}
+    output: {final_state: "q1", mem_cache_value: b, tape_output: b, tape_displacement: R}
+  - params: {initial_state: "q1", mem_cache_value: b, tape_input: A}
+    output: {final_state: "q2", mem_cache_value: b, tape_output: A, tape_displacement: L}
+  - params: {initial_state: "q1", mem_cache_value: b, tape_input: B}
+    output: {final_state: "q2", mem_cache_value: b, tape_output: B, tape_displacement: L}
+  - params: {initial_state: "q1", mem_cache_value: b, tape_input: null}
+    output: {final_state: "q2", mem_cache_value: b, tape_output: null, tape_displacement: L}
+
+  # q2: escribe en mayúscula el símbolo traído y se lleva el que había en esa celda
+  - params: {initial_state: "q2", mem_cache_value: a, tape_input: a}
+    output: {final_state: "q3", mem_cache_value: a, tape_output: A, tape_displacement: L}
+  - params: {initial_state: "q2", mem_cache_value: a, tape_input: b}
+    output: {final_state: "q3", mem_cache_value: b, tape_output: A, tape_displacement: L}
+  - params: {initial_state: "q2", mem_cache_value: b, tape_input: a}
+    output: {final_state: "q3", mem_cache_value: a, tape_output: B, tape_displacement: L}
+  - params: {initial_state: "q2", mem_cache_value: b, tape_input: b}
+    output: {final_state: "q3", mem_cache_value: b, tape_output: B, tape_displacement: L}
+  # q2 sobre X: quedaba un solo símbolo sin procesar, así que se escribe en su sitio
+  - params: {initial_state: "q2", mem_cache_value: a, tape_input: X}
+    output: {final_state: "q0", mem_cache_value: null, tape_output: A, tape_displacement: R}
+  - params: {initial_state: "q2", mem_cache_value: b, tape_input: X}
+    output: {final_state: "q0", mem_cache_value: null, tape_output: B, tape_displacement: R}
+
+  # q3: regresa hasta X y escribe allí el símbolo que trae en memoria
+  - params: {initial_state: "q3", mem_cache_value: a, tape_input: a}
+    output: {final_state: "q3", mem_cache_value: a, tape_output: a, tape_displacement: L}
+  - params: {initial_state: "q3", mem_cache_value: a, tape_input: b}
+    output: {final_state: "q3", mem_cache_value: a, tape_output: b, tape_displacement: L}
+  - params: {initial_state: "q3", mem_cache_value: b, tape_input: a}
+    output: {final_state: "q3", mem_cache_value: b, tape_output: a, tape_displacement: L}
+  - params: {initial_state: "q3", mem_cache_value: b, tape_input: b}
+    output: {final_state: "q3", mem_cache_value: b, tape_output: b, tape_displacement: L}
+  - params: {initial_state: "q3", mem_cache_value: a, tape_input: X}
+    output: {final_state: "q0", mem_cache_value: null, tape_output: A, tape_displacement: R}
+  - params: {initial_state: "q3", mem_cache_value: b, tape_input: X}
+    output: {final_state: "q0", mem_cache_value: null, tape_output: B, tape_displacement: R}
+
+  # c1: vuelve al blanco de la izquierda
+  - params: {initial_state: "c1", mem_cache_value: null, tape_input: A}
+    output: {final_state: "c1", mem_cache_value: null, tape_output: A, tape_displacement: L}
+  - params: {initial_state: "c1", mem_cache_value: null, tape_input: B}
+    output: {final_state: "c1", mem_cache_value: null, tape_output: B, tape_displacement: L}
+  - params: {initial_state: "c1", mem_cache_value: null, tape_input: null}
+    output: {final_state: "c2", mem_cache_value: null, tape_output: null, tape_displacement: R}
+
+  # c2: pasa las mayúsculas a minúsculas y acepta al llegar al blanco
+  - params: {initial_state: "c2", mem_cache_value: null, tape_input: A}
+    output: {final_state: "c2", mem_cache_value: null, tape_output: a, tape_displacement: R}
+  - params: {initial_state: "c2", mem_cache_value: null, tape_input: B}
+    output: {final_state: "c2", mem_cache_value: null, tape_output: b, tape_displacement: R}
+  - params: {initial_state: "c2", mem_cache_value: null, tape_input: null}
+    output: {final_state: "qf", mem_cache_value: null, tape_output: null, tape_displacement: S}
+
+simulation_strings:
+  - abbab
+  - aaabb
+  - ababab
+  - bbabaa
