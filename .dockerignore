@@ -1,0 +1,33 @@
+# Git
+.git/
+.gitignore
+
+# Python virtual environment and caches
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+.ruff_cache/
+.mypy_cache/
+
+# Node / Frontend
+frontend/node_modules/
+frontend/dist/
+frontend/bun.lock
+*.tsbuildinfo
+
+# IDE / Editor
+.idea/
+.vscode/
+.claude/
+.gemini/
+.impeccable/
+
+# System / logs
+*.log

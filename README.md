@@ -24,8 +24,42 @@ Permite definir Máquinas de Turing en formato YAML, validar estructural y semá
 - **Python**: `>=3.14,<3.15`
 - **Gestor de Python**: [`uv`](https://docs.astral.sh/uv/)
 - **Frontend**: Node.js y `npm`
+- **Docker**: (Opcional) Docker y Docker Compose para levantar todo el proyecto con un solo comando.
 
-## Instalación
+## Ejecución con Docker (Construcción con un comando)
+
+Para construir y levantar todo el sistema (Backend FastAPI + Frontend React con proxy Nginx) en **un solo comando**:
+
+```bash
+docker compose up --build
+```
+
+Si únicamente deseas compilar las imágenes sin iniciar los contenedores:
+
+```bash
+docker compose build
+```
+
+- **Interfaz web**: [http://localhost:5174](http://localhost:5174)
+- **Documentación Swagger UI**: [http://localhost:8001/docs](http://localhost:8001/docs) (también disponible en [http://localhost:5174/docs](http://localhost:5174/docs))
+
+> [!NOTE]
+> Los puertos se configuran por defecto en `8001` (backend) y `5174` (frontend) para evitar colisiones con otros servicios del host. Puedes ajustarlos modificando `.env` o mediante variables de entorno:
+> ```bash
+> BACKEND_PORT=8000 FRONTEND_PORT=5173 docker compose up --build
+> ```
+
+### Pruebas y CLI mediante Docker
+
+```bash
+# Ejecutar la suite de pruebas unitarias y reporte de cobertura dentro del contenedor
+docker compose run --rm backend pytest
+
+# Ejecutar el CLI de validación de máquinas de Turing
+docker compose run --rm backend python -m tm_simulator tests/fixtures/yaml/recognizer_w_hash_w.yaml
+```
+
+## Instalación local (sin Docker)
 
 Desde la raíz del repositorio:
 

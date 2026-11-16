@@ -7,6 +7,9 @@ __pycache__/
 .venv/
 venv/
 ENV/
+.env
+.env.*
+!.env.example
 
 # Packaging / build artifacts
 build/
@@ -27,4 +30,6 @@ htmlcov/
 # Frontend
 node_modules/
 frontend/dist/
+frontend/bun.lock
+bun.lock
 *.tsbuildinfo

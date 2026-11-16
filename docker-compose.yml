@@ -1,0 +1,29 @@
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: tm-simulator-backend
+    ports:
+      - "${BACKEND_PORT:-8001}:8000"
+    volumes:
+      # Montaje para desarrollo: cambios en src o tests se reflejan sin reconstruir
+      - ./src:/app/src
+      - ./tests:/app/tests
+    healthcheck:
+      test: ["CMD", "python3", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/openapi.json')"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+      start_period: 2s
+
+  frontend:
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+    container_name: tm-simulator-frontend
+    ports:
+      - "${FRONTEND_PORT:-5174}:80"
+    depends_on:
+      backend:
+        condition: service_healthy
