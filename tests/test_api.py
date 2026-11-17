@@ -74,3 +74,19 @@ def test_step_endpoint_and_errors() -> None:
     assert invalid.status_code == 422
     assert invalid.json()["detail"]["code"] == "invalid_machine"
     assert request("GET", "/openapi.json").status_code == 200
+
+
+def test_diagram_exposes_states_and_edges() -> None:
+    response = request("POST", "/api/v1/diagram", {"yaml": _yaml("recognizer_w_hash_w.yaml")})
+    assert response.status_code == 200
+    body = response.json()
+    assert body["initial_state"] == "0"
+    assert body["final_state"] == "5"
+    assert set(body["states"]) == {"0", "1", "2", "3", "4", "5"}
+    assert ("0", "1") in {(edge["source"], edge["target"]) for edge in body["edges"]}
+    assert all(edge["source"] in body["states"] for edge in body["edges"])
+
+
+def test_diagram_rejects_invalid_yaml() -> None:
+    response = request("POST", "/api/v1/diagram", {"yaml": _yaml("invalid_semantic.yaml")})
+    assert response.status_code == 422
