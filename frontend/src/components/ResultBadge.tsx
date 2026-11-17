@@ -10,6 +10,7 @@ const REASONS: Record<SimulationResult["halt_reason"], string> = {
   accepted: "se alcanzó el estado final",
   no_transition: "no existe transición aplicable",
   step_limit: "se alcanzó el límite de pasos",
+  loop: "bucle infinito: una configuración se repitió",
 };
 
 export function ResultBadge({ result }: { result: SimulationResult }) {

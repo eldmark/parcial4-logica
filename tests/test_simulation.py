@@ -52,17 +52,25 @@ def test_step_by_step_and_left_expansion() -> None:
     assert simulator.step() == simulator.snapshots[-1]
 
 
-def test_step_limit_is_indeterminate_and_no_transition_is_rejection() -> None:
-    machine = MachineDefinition(
-        states={"start", "done"},
+def _machine(transitions: dict[TransitionKey, TransitionEffect]) -> MachineDefinition:
+    return MachineDefinition(
+        states={"start", "other", "done"},
         initial_state="start",
         final_state="done",
         input_alphabet={"a"},
         tape_alphabet={"a", None},
-        transitions={
-            TransitionKey("start", None, "a"): TransitionEffect("start", None, "a", Movement.STAY)
-        },
+        transitions=transitions,
         simulation_strings=(),
+    )
+
+
+def test_step_limit_is_indeterminate_and_no_transition_is_rejection() -> None:
+    # Escribe una «a» nueva en cada paso: la cinta crece y ninguna configuración se repite.
+    machine = _machine(
+        {
+            TransitionKey("start", None, "a"): TransitionEffect("start", None, "a", Movement.RIGHT),
+            TransitionKey("start", None, None): TransitionEffect("start", None, "a", Movement.RIGHT),
+        }
     )
     result = simulate(machine, "a", max_steps=3)
     assert (result.status, result.halt_reason, result.steps) == (
@@ -70,8 +78,46 @@ def test_step_limit_is_indeterminate_and_no_transition_is_rejection() -> None:
         HaltReason.STEP_LIMIT,
         3,
     )
-    assert simulate(machine, "").status == "rejected"
+    assert simulate(_machine({}), "a").status == "rejected"
     with pytest.raises(ValueError):
         Simulator(machine, "b")
     with pytest.raises(ValueError):
         Simulator(machine, "a", max_steps=0)
+
+
+def test_loop_is_detected_when_a_configuration_repeats() -> None:
+    # a → a, S deja la configuración idéntica: el ciclo se detecta en el primer paso.
+    stay = _machine(
+        {TransitionKey("start", None, "a"): TransitionEffect("start", None, "a", Movement.STAY)}
+    )
+    result = simulate(stay, "a")
+    assert (result.status, result.halt_reason, result.steps) == ("rejected", HaltReason.LOOP, 1)
+    assert result.snapshots[0].tape == result.snapshots[-1].tape
+    assert len(result.snapshots) == result.steps + 1
+
+    # Ciclo de dos estados que oscila sobre la misma celda.
+    pingpong = _machine(
+        {
+            TransitionKey("start", None, "a"): TransitionEffect("other", None, "a", Movement.STAY),
+            TransitionKey("other", None, "a"): TransitionEffect("start", None, "a", Movement.STAY),
+        }
+    )
+    result = simulate(pingpong, "a")
+    assert (result.halt_reason, result.steps) == (HaltReason.LOOP, 2)
+
+    # Ciclo con movimiento: ir a la derecha y volver a la izquierda.
+    walker = _machine(
+        {
+            TransitionKey("start", None, "a"): TransitionEffect("other", None, "a", Movement.RIGHT),
+            TransitionKey("other", None, None): TransitionEffect("start", None, None, Movement.LEFT),
+        }
+    )
+    assert simulate(walker, "a").halt_reason == HaltReason.LOOP
+
+
+def test_loop_detection_does_not_flag_accepting_or_progressing_runs() -> None:
+    machine = load_machine_from_file(FIXTURES / "recognizer_w_hash_w.yaml")
+    assert all(
+        simulate(machine, value).halt_reason != HaltReason.LOOP
+        for value in machine.simulation_strings
+    )

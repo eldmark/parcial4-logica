@@ -1,7 +1,7 @@
 // Tipos espejo de los schemas de src/tm_simulator/api.py.
 export type Movement = "L" | "R" | "S";
 export type Status = "accepted" | "rejected" | "indeterminate";
-export type HaltReason = "accepted" | "no_transition" | "step_limit";
+export type HaltReason = "accepted" | "no_transition" | "step_limit" | "loop";
 
 export interface Tape {
   start: number;
