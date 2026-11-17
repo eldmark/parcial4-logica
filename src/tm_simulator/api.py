@@ -72,6 +72,24 @@ class SimulationBatchResponse(BaseModel):
     results: list[SimulationResultSchema]
 
 
+class DiagramRequest(BaseModel):
+    yaml: str = Field(min_length=1, description="Definición completa de la MT en YAML")
+
+
+class DiagramEdgeSchema(BaseModel):
+    source: str
+    target: str
+    key: TransitionKeySchema
+    effect: TransitionEffectSchema
+
+
+class DiagramResponse(BaseModel):
+    states: list[str]
+    initial_state: str
+    final_state: str
+    edges: list[DiagramEdgeSchema]
+
+
 class StepResponse(BaseModel):
     snapshot: SnapshotSchema
     halt_reason: HaltReason | None
@@ -103,6 +121,26 @@ async def run_simulations(request: SimulationRequest) -> dict:
         "results": [
             asdict(simulate(machine, value, max_steps=request.max_steps)) for value in inputs
         ]
+    }
+
+
+@app.post("/api/v1/diagram", tags=["diagram"], response_model=DiagramResponse)
+async def get_diagram(request: DiagramRequest) -> dict:
+    """Devuelve el grafo de estados (nodos y transiciones) de la máquina definida."""
+    machine = _machine_or_422(request.yaml)
+    return {
+        "states": sorted(machine.states),
+        "initial_state": machine.initial_state,
+        "final_state": machine.final_state,
+        "edges": [
+            {
+                "source": key.state,
+                "target": effect.next_state,
+                "key": asdict(key),
+                "effect": asdict(effect),
+            }
+            for key, effect in machine.transitions.items()
+        ],
     }
 
 

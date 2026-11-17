@@ -74,3 +74,45 @@ def test_step_endpoint_and_errors() -> None:
     assert invalid.status_code == 422
     assert invalid.json()["detail"]["code"] == "invalid_machine"
     assert request("GET", "/openapi.json").status_code == 200
+
+
+def test_diagram_exposes_states_and_edges() -> None:
+    response = request("POST", "/api/v1/diagram", {"yaml": _yaml("recognizer_w_hash_w.yaml")})
+    assert response.status_code == 200
+    body = response.json()
+    assert body["initial_state"] == "0"
+    assert body["final_state"] == "5"
+    assert set(body["states"]) == {"0", "1", "2", "3", "4", "5"}
+    assert ("0", "1") in {(edge["source"], edge["target"]) for edge in body["edges"]}
+    assert all(edge["source"] in body["states"] for edge in body["edges"])
+
+
+def test_diagram_rejects_invalid_yaml() -> None:
+    response = request("POST", "/api/v1/diagram", {"yaml": _yaml("invalid_semantic.yaml")})
+    assert response.status_code == 422
+
+
+LOOPING_YAML = """
+q_states:
+  q_list: ["0", "1"]
+  initial: "0"
+  final: "1"
+alphabet: [a]
+tape_alphabet:
+  - a
+  -
+delta:
+  - params: {initial_state: "0", mem_cache_value: , tape_input: a}
+    output: {final_state: "0", mem_cache_value: , tape_output: a, tape_displacement: S}
+simulation_strings: [a]
+"""
+
+
+def test_loop_is_reported_before_the_step_limit() -> None:
+    response = request("POST", "/api/v1/simulations", {"yaml": LOOPING_YAML})
+    result = response.json()["results"][0]
+    assert (result["status"], result["halt_reason"], result["steps"]) == ("rejected", "loop", 1)
+    step = request(
+        "POST", "/api/v1/simulations/step", {"yaml": LOOPING_YAML, "input": "a", "step": 1}
+    )
+    assert step.json()["halt_reason"] == "loop"

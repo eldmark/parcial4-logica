@@ -1,8 +1,9 @@
-import { useState } from "react";
-import { runSimulations, SimulationApiError } from "./api/client";
-import type { ApiError, SimulationResult } from "./api/types";
+import { useEffect, useState } from "react";
+import { fetchDiagram, runSimulations, SimulationApiError } from "./api/client";
+import type { ApiError, Diagram, SimulationResult } from "./api/types";
 import { ErrorPanel } from "./components/ErrorPanel";
 import { ResultTabs } from "./components/ResultTabs";
+import { StateDiagram } from "./components/StateDiagram";
 import { YamlEditor } from "./components/YamlEditor";
 import { EXAMPLES } from "./examples";
 
@@ -14,6 +15,33 @@ export default function App() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<ApiError | null>(null);
   const [results, setResults] = useState<SimulationResult[]>([]);
+
+  const [diagram, setDiagram] = useState<Diagram | null>(null);
+  const [showDiagram, setShowDiagram] = useState(true);
+  const [diagramError, setDiagramError] = useState<string | null>(null);
+
+  // Diagrama depende del yaml
+  useEffect(() => {
+    const controller = new AbortController();
+    const timer = setTimeout(async () => {
+      try {
+        setDiagram(await fetchDiagram(yaml, controller.signal));
+        setDiagramError(null);
+      } catch (e) {
+        if (controller.signal.aborted) return;
+        setDiagram(null);
+        setDiagramError(
+          e instanceof SimulationApiError
+            ? [e.info.title, ...e.info.messages].join(" — ")
+            : "No se pudo generar el diagrama.",
+        );
+      }
+    }, 400);
+    return () => {
+      clearTimeout(timer);
+      controller.abort();
+    };
+  }, [yaml]);
 
   const run = async () => {
     setLoading(true);
@@ -48,8 +76,26 @@ export default function App() {
         onMaxSteps={setMaxSteps}
         onRun={run}
       />
+      <section className="panel">
+        <div className="panel-header">
+          <h2>Diagrama de estados</h2>
+          <button type="button" aria-expanded={showDiagram} onClick={() => setShowDiagram((v) => !v)}>
+            {showDiagram ? "Ocultar diagrama" : "Mostrar diagrama"}
+          </button>
+        </div>
+        {showDiagram && diagram && <StateDiagram diagram={diagram} highlight={null} />}
+        {showDiagram && diagramError && (
+          <p className="muted">No se puede dibujar el diagrama: {diagramError}</p>
+        )}
+        {showDiagram && diagram && (
+          <p className="muted">
+            Transiciones: <code>leído.caché → escrito,movimiento.caché</code> (␣ = blank). Doble
+            círculo = estado final
+          </p>
+        )}
+      </section>
       {error && <ErrorPanel error={error} />}
-      {results.length > 0 && <ResultTabs results={results} />}
+      {results.length > 0 && <ResultTabs results={results} diagram={diagram} />}
     </main>
   );
 }

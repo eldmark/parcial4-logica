@@ -10,6 +10,7 @@ class HaltReason(StrEnum):
     ACCEPTED = "accepted"
     NO_TRANSITION = "no_transition"
     STEP_LIMIT = "step_limit"
+    LOOP = "loop"
 
 
 @dataclass(frozen=True, slots=True)
@@ -67,6 +68,11 @@ class Simulator:
         self.halt_reason: HaltReason | None = None
         self.snapshots = [self.snapshot()]
         self.transitions: list[AppliedTransition] = []
+        # Máquina determinista: si una configuración completa se repite, nunca terminará.
+        self._seen = {self._configuration()}
+
+    def _configuration(self) -> tuple:
+        return (self.state, self.memory, self.head, frozenset(self.cells.items()))
 
     def tape_view(self) -> TapeView:
         positions = (*self.cells.keys(), self.head)
@@ -107,6 +113,12 @@ class Simulator:
         self.snapshots.append(current)
         if self.state == self.machine.final_state:
             self.halt_reason = HaltReason.ACCEPTED
+            return current
+        configuration = self._configuration()
+        if configuration in self._seen:
+            self.halt_reason = HaltReason.LOOP
+        else:
+            self._seen.add(configuration)
         return current
 
     def run(self) -> SimulationResult:

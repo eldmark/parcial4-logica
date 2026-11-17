@@ -67,10 +67,11 @@ Ejecuta una `MachineDefinition` sobre una cinta infinita indexada por enteros (`
   - Valida que todos los caracteres de `input_string` pertenezcan a `machine.input_alphabet` y que `max_steps >= 1`.
   - Inicia en `head = 0`, `state = machine.initial_state`, `memory = None`, `steps = 0`, guardando la ID inicial en `snapshots`.
   - `step()`: Aplica una transición buscando `TransitionKey(state, memory, cells.get(head))`. Actualiza cinta, estado, memoria, cabezal (`L` = `-1`, `R` = `+1`, `S` = `0`) y registra el nuevo `Snapshot` y `AppliedTransition`.
-  - Se detiene por una de tres razones (`HaltReason`):
+  - Se detiene por una de cuatro razones (`HaltReason`):
     - `ACCEPTED` (`"accepted"`): El estado actual alcanza `machine.final_state`.
     - `NO_TRANSITION` (`"no_transition"`): No existe transición definida para la configuración actual (la cadena es rechazada).
     - `STEP_LIMIT` (`"step_limit"`): Se alcanzó `max_steps` sin aceptar ni quedar sin transición (estado `"indeterminate"`).
+    - `LOOP` (`"loop"`): La configuración completa (estado, memoria caché, posición del cabezal y contenido de la cinta) ya había ocurrido antes. Como la máquina es determinista, repetiría esa misma secuencia para siempre, así que se detiene de inmediato con estado `"rejected"` sin esperar a `max_steps`. La ID repetida queda como último snapshot. Solo detecta ciclos exactos: una máquina que avanza indefinidamente con la cinta creciendo nunca repite una configuración y termina en `STEP_LIMIT`.
 - **`simulate(machine, input_string, *, max_steps=10_000) -> SimulationResult`**: Ejecuta hasta detenerse y retorna `SimulationResult` con `status`, `halt_reason`, `steps`, `final_tape`, `snapshots` y `transitions`.
 
 ---

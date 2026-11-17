@@ -1,7 +1,7 @@
 // Tipos espejo de los schemas de src/tm_simulator/api.py.
 export type Movement = "L" | "R" | "S";
 export type Status = "accepted" | "rejected" | "indeterminate";
-export type HaltReason = "accepted" | "no_transition" | "step_limit";
+export type HaltReason = "accepted" | "no_transition" | "step_limit" | "loop";
 
 export interface Tape {
   start: number;
@@ -46,4 +46,24 @@ export interface ValidationIssue {
 export interface ApiError {
   title: string;
   messages: string[];
+}
+
+export interface DiagramEdge {
+  source: string;
+  target: string;
+  key: AppliedTransition["key"];
+  effect: AppliedTransition["effect"];
+}
+
+export interface Diagram {
+  states: string[];
+  initial_state: string;
+  final_state: string;
+  edges: DiagramEdge[];
+}
+
+/** Qué resaltar en el diagrama: estado actual y transición aplicada en ese paso. */
+export interface Highlight {
+  state: string;
+  transition: AppliedTransition | null;
 }
