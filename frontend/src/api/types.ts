@@ -47,3 +47,23 @@ export interface ApiError {
   title: string;
   messages: string[];
 }
+
+export interface DiagramEdge {
+  source: string;
+  target: string;
+  key: AppliedTransition["key"];
+  effect: AppliedTransition["effect"];
+}
+
+export interface Diagram {
+  states: string[];
+  initial_state: string;
+  final_state: string;
+  edges: DiagramEdge[];
+}
+
+/** Qué resaltar en el diagrama: estado actual y transición aplicada en ese paso. */
+export interface Highlight {
+  state: string;
+  transition: AppliedTransition | null;
+}

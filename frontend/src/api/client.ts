@@ -1,4 +1,4 @@
-import type { ApiError, SimulationResult, ValidationIssue } from "./types";
+import type { ApiError, Diagram, SimulationResult, ValidationIssue } from "./types";
 
 export class SimulationApiError extends Error {
   constructor(public readonly info: ApiError) {
@@ -59,4 +59,21 @@ export async function runSimulations(
     throw new SimulationApiError(parseDetail(response.status, detail));
   }
   return body.results as SimulationResult[];
+}
+
+export async function fetchDiagram(yaml: string, signal?: AbortSignal): Promise<Diagram> {
+  const response = await fetch("/api/v1/diagram", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ yaml }),
+    signal,
+  });
+  const body = await response.json().catch(() => null);
+  if (!response.ok) {
+    const detail = Array.isArray(body?.detail)
+      ? { code: "request", message: JSON.stringify(body.detail) }
+      : body?.detail;
+    throw new SimulationApiError(parseDetail(response.status, detail));
+  }
+  return body as Diagram;
 }
