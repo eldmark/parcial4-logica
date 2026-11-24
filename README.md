@@ -8,6 +8,10 @@ Permite definir Máquinas de Turing en formato YAML, validar estructural y semá
 > **Sobre esta copia (Lógica Matemática, parcial 4).** Este proyecto se desarrolló originalmente para el curso de **Teoría de la Computación**. Por las políticas de esa clase, el repositorio original no se puede hacer público, así que esta es una copia del proyecto con su historial de commits. El trabajo original lo hicimos los tres integrantes que aparecen abajo. En esta copia solo se cambió un poco la interfaz de usuario para que la página sea responsive (se adapta a teléfonos, tabletas y pantallas anchas) y sea más cómoda de usar. La lógica del simulador, la API y las pruebas no cambiaron.
 >
 > El uso de inteligencia artificial está declarado en [AI_USAGE.md](AI_USAGE.md).
+>
+> El reporte del parcial, que explica la relación entre este proyecto y el curso de Lógica Matemática, está en [docs/entrega](docs/entrega) en Word y en PDF.
+
+**Repositorio:** [github.com/eldmark/parcial4-logica](https://github.com/eldmark/parcial4-logica)
 
 ## Integrantes
 - Marco Alejandro Díaz Castañeda ([@eldmark](https://github.com/eldmark))
@@ -21,6 +25,24 @@ Permite definir Máquinas de Turing en formato YAML, validar estructural y semá
 - Las pestañas de resultados quedan en una sola fila que se desplaza horizontalmente.
 - Las celdas de la cinta son más pequeñas en teléfono, y la tabla de descripciones instantáneas se desplaza dentro de su recuadro sin romper el ancho de la página.
 - Hay un encabezado con una breve descripción, sombras suaves en los paneles y un contorno visible al navegar con el teclado.
+
+## Capturas de la interfaz
+
+Editor YAML con la máquina reconocedora de `w#w` y su diagrama de estados:
+
+![Editor YAML y diagrama de estados](docs/img/ui-editor.png)
+
+Cadena aceptada (`aab#aab`): la máquina llega al estado final 5 en 32 pasos. La tabla muestra cada descripción instantánea y la transición aplicada, y el diagrama resalta la última transición:
+
+![Resultado de una cadena aceptada](docs/img/ui-aceptada.png)
+
+Cadena rechazada (`aab#aba`): en el paso 13 no existe una transición para el estado 2 con el símbolo `b` en la cinta:
+
+![Resultado de una cadena rechazada](docs/img/ui-rechazada.png)
+
+Vista en teléfono:
+
+<img src="docs/img/ui-movil.png" alt="Vista del simulador en un teléfono" width="300">
 
 > Para consultar el detalle técnico de la arquitectura por capas, los modelos de dominio y el contrato de simulación, revisa [docs/arquitectura_y_configuracion.md](docs/arquitectura_y_configuracion.md).
 
