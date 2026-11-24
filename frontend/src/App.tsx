@@ -63,7 +63,14 @@ export default function App() {
 
   return (
     <main className="app">
-      <h1>Simulador de Máquinas de Turing</h1>
+      <header className="app-header">
+        <h1>Simulador de Máquinas de Turing</h1>
+        <p className="muted">
+          Máquina determinista de una cinta con memoria caché. Elige un ejemplo o escribe tu YAML,
+          simula y recorre la ejecución paso a paso.
+        </p>
+      </header>
+      <div className="workspace">
       <YamlEditor
         yaml={yaml}
         input={input}
@@ -76,7 +83,7 @@ export default function App() {
         onMaxSteps={setMaxSteps}
         onRun={run}
       />
-      <section className="panel">
+      <section className="panel diagram-panel">
         <div className="panel-header">
           <h2>Diagrama de estados</h2>
           <button type="button" aria-expanded={showDiagram} onClick={() => setShowDiagram((v) => !v)}>
@@ -94,6 +101,7 @@ export default function App() {
           </p>
         )}
       </section>
+      </div>
       {error && <ErrorPanel error={error} />}
       {results.length > 0 && <ResultTabs results={results} diagram={diagram} />}
     </main>

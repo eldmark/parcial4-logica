@@ -4,10 +4,23 @@ Simulador de Máquinas deterministas de Turing de una cinta infinita con registr
 
 Permite definir Máquinas de Turing en formato YAML, validar estructural y semánticamente su configuración, simular cadenas paso a paso obteniendo la secuencia completa de descripciones instantáneas (IDs) e inspeccionar visualmente el estado de la cinta y del cabezal desde una interfaz web.
 
+> [!IMPORTANT]
+> **Sobre esta copia (Lógica Matemática, parcial 4).** Este proyecto se desarrolló originalmente para el curso de **Teoría de la Computación**. Por las políticas de esa clase, el repositorio original no se puede hacer público, así que esta es una copia del proyecto con su historial de commits. El trabajo original lo hicimos los tres integrantes que aparecen abajo. En esta copia solo se cambió un poco la interfaz de usuario para que la página sea responsive (se adapta a teléfonos, tabletas y pantallas anchas) y sea más cómoda de usar. La lógica del simulador, la API y las pruebas no cambiaron.
+>
+> El uso de inteligencia artificial está declarado en [AI_USAGE.md](AI_USAGE.md).
+
 ## Integrantes
-- Marco Alejandro Díaz Castañeda
-- Jackelyn Nicolle Girón Villacinda
-- Sergio Estuardo Tan Coromac
+- Marco Alejandro Díaz Castañeda ([@eldmark](https://github.com/eldmark))
+- Jackelyn Nicolle Girón Villacinda ([@gnicoool](https://github.com/gnicoool))
+- Sergio Estuardo Tan Coromac ([@stan-2021131](https://github.com/stan-2021131))
+
+### Cambios de interfaz en esta copia
+
+- El editor YAML y el diagrama de estados se muestran lado a lado en pantallas anchas; en pantallas angostas se apilan.
+- En teléfono, los botones ocupan el ancho disponible y tienen un tamaño cómodo para tocar, y el botón *Simular* ocupa toda la fila.
+- Las pestañas de resultados quedan en una sola fila que se desplaza horizontalmente.
+- Las celdas de la cinta son más pequeñas en teléfono, y la tabla de descripciones instantáneas se desplaza dentro de su recuadro sin romper el ancho de la página.
+- Hay un encabezado con una breve descripción, sombras suaves en los paneles y un contorno visible al navegar con el teclado.
 
 > Para consultar el detalle técnico de la arquitectura por capas, los modelos de dominio y el contrato de simulación, revisa [docs/arquitectura_y_configuracion.md](docs/arquitectura_y_configuracion.md).
 

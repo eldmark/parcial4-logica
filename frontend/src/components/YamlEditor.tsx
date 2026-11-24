@@ -33,7 +33,7 @@ export function YamlEditor(p: Props) {
   return (
     <section className="panel editor">
       <h2>Definición de la máquina (YAML)</h2>
-      <div className="row">
+      <div className="row presets">
         {EXAMPLES.map((e, i) => (
           <button
             key={e.label}
@@ -78,8 +78,8 @@ export function YamlEditor(p: Props) {
         spellCheck={false}
         aria-label="Definición YAML"
       />
-      <div className="row">
-        <label>
+      <div className="row run-row">
+        <label className="grow">
           Cadena (vacío = todas las del YAML)
           <input
             value={p.input}

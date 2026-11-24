@@ -11,7 +11,7 @@ export function Controls({ player }: { player: Player }) {
       <button type="button" onClick={player.prev} disabled={atStart} title="Paso anterior">
         ◀
       </button>
-      <button type="button" onClick={player.toggle}>
+      <button type="button" className="play" onClick={player.toggle}>
         {player.playing ? "⏸ Pausa" : "▶ Reproducir"}
       </button>
       <button type="button" onClick={player.next} disabled={atEnd} title="Paso siguiente">
@@ -20,7 +20,7 @@ export function Controls({ player }: { player: Player }) {
       <button type="button" onClick={player.end} disabled={atEnd} title="Último paso">
         ⏭
       </button>
-      <label>
+      <label className="speed">
         Velocidad ({player.delayMs} ms/paso)
         <input
           type="range"
@@ -31,7 +31,7 @@ export function Controls({ player }: { player: Player }) {
           onChange={(e) => player.setDelayMs(1550 - Number(e.target.value))}
         />
       </label>
-      <span className="muted">
+      <span className="muted step-count">
         {player.index} / {player.last}
       </span>
     </div>
